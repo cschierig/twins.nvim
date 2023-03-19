@@ -6,8 +6,8 @@ local default_config = {
     parens = { '(', ')' },
     curly = { '{', '}' },
     square = { '[', ']' },
-    squotes = { "'", "'" },
-    dquotes = { '"', '"' },
+    squotes = { "'" },
+    dquotes = { '"' },
   },
   languages = {
     ['*'] = {
@@ -32,6 +32,7 @@ local default_config = {
       'parens',
       'square',
       'dquotes',
+      -- { '*', '*' },
     },
     rust = {
       'parens',
@@ -58,7 +59,7 @@ local setup_keybindings = function(language_pairs, twins)
   for _, pair in pairs(language_pairs) do
     local twin = twins[pair]
     vim.keymap.set('i', twin[1], function()
-      insert_twin(twin[1], twin[2])
+      insert_twin(twin[1], twin[2] or twin[1])
     end, {
       buffer = 0,
     })

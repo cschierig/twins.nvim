@@ -59,6 +59,7 @@ It has the following structure:
     parens = { '(', ')' },
     curly = { '{', '}' },
     square = { '[', ']' },
+    dquotes = { '"' } -- optional syntax if the left and the right tokens are the same
   },
   languages = {
     -- pairs which are used for all languages
