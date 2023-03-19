@@ -32,7 +32,8 @@ local default_config = {
       'parens',
       'square',
       'dquotes',
-      -- { '*', '*' },
+      { '*' },
+      { '_' },
     },
     rust = {
       'parens',
@@ -57,7 +58,14 @@ end
 
 local setup_keybindings = function(language_pairs, twins)
   for _, pair in pairs(language_pairs) do
-    local twin = twins[pair]
+    -- check if key is table
+    local twin
+    if type(pair) == 'table' then
+      twin = pair
+    else
+      twin = twins[pair]
+    end
+
     vim.keymap.set('i', twin[1], function()
       insert_twin(twin[1], twin[2] or twin[1])
     end, {

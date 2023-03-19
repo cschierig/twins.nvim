@@ -72,6 +72,9 @@ It has the following structure:
       'curly',
       'square'
     }
+    markdown = {
+      { '_', '_' } -- pairs can also be specified in the language configuration
+    },
   }
 }
 ```
