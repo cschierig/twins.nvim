@@ -6,13 +6,39 @@ local default_config = {
     parens = { '(', ')' },
     curly = { '{', '}' },
     square = { '[', ']' },
+    squotes = { "'", "'" },
+    dquotes = { '"', '"' },
   },
   languages = {
-    ['*'] = {},
+    ['*'] = {
+      'parens',
+      'dquotes',
+    },
+    c = {
+      'parens',
+      'curly',
+      'square',
+      'squotes',
+      'dquotes',
+    },
     lua = {
       'parens',
       'curly',
       'square',
+      'squotes',
+      'dquotes',
+    },
+    markdown = {
+      'parens',
+      'square',
+      'dquotes',
+    },
+    rust = {
+      'parens',
+      'curly',
+      'square',
+      'squotes',
+      'dquotes',
     },
   },
 }
@@ -25,7 +51,7 @@ local insert_twin = function(lhs, rhs)
   vim.api.nvim_buf_set_text(0, row, column, row, column, { rhs })
   vim.api.nvim_buf_set_text(0, row, column, row, column, { lhs })
 
-  vim.api.nvim_win_set_cursor(0, { position[1], column + 1 })
+  vim.api.nvim_win_set_cursor(0, { position[1], column + lhs:len() })
 end
 
 local setup_keybindings = function(language_pairs, twins)
