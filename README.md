@@ -1,28 +1,32 @@
 # Twins.nvim
 
-**Twins.nvim** is a simple plugin which automatically closes braces and other pairs based on the file type.
+**Twins.nvim** is a simple lua plugin which automatically closes braces and other pairs based on the file type.
 The plugin is currently in early development and isn't very smart about inserting and deleting (yet).
 
 ## Features
 
-- automatically close braces and other pairs when left side is inserted.
-- Filetype dependend 
+- Automatically closes braces and other pairs when left side is inserted.
+- Move past right side of pair when entering it.
+- Language-dependent auto-closing pairs
+- Supports treesitter injected languages
 
 ## Not yet implemented
 
 - dot repeat
+- nested languages
 - Treesitter support to detect if a pair should be closed.
-- nested language blocks with treesitter.
-- deleting pair after inserting deleting both tokens.
+- multiple character pairs (`function()...end`)
+- deleting pair after inserting should delete both tokens.
 
 ## Installation
 
 To install the plugin, use your favourite plugin manager to clone the repo
-and proceed by following the instructions in the [#Configuration] section.
+and proceed by following the instructions in the [configuration](#Configuration) section.
 
-The plugin depends on [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/).
-Currently it is technically not needed, but I plan on using it and adding it as a dependency later on would break
-exisiting configurations.
+### Dependencies
+
+- Neovim >= 0.9.0
+- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/).
 
 ### Packer.nvim
 ```lua
@@ -67,17 +71,20 @@ It has the following structure:
       -- list of pairs
       'parens'
     },
-    lua = {
-      -- additional pairs used by lua
+    c = {
+      -- additional pairs used by c
       'curly',
       'square'
-    }
+    },
+    c_sharp = 'c', -- define c_sharp as an alias for c, making both languages use the same pairs
     markdown = {
       { '_', '_' } -- pairs can also be specified in the language configuration
     },
   }
 }
 ```
+
+The default configuration can be at the beginning of [this file](./lua/init.lua).
 
 ## Similar (better) plugins
 

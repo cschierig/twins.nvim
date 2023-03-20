@@ -1,6 +1,9 @@
 local vim = vim
+local util = require('twins.util')
+
 local M = {}
 
+-- TODO: disallow lhs duplication
 local default_config = {
   pairs = {
     parens = { '(', ')' },
@@ -8,6 +11,7 @@ local default_config = {
     square = { '[', ']' },
     squotes = { "'" },
     dquotes = { '"' },
+    backticks = { '`' },
   },
   languages = {
     ['*'] = {
@@ -21,6 +25,7 @@ local default_config = {
       'squotes',
       'dquotes',
     },
+    c_sharp = 'c',
     lua = {
       'parens',
       'curly',
@@ -32,9 +37,11 @@ local default_config = {
       'parens',
       'square',
       'dquotes',
+      'backticks',
       { '*' },
       { '_' },
     },
+    markdown_inline = 'markdown',
     rust = {
       'parens',
       'curly',
@@ -45,61 +52,112 @@ local default_config = {
   },
 }
 
-local insert_twin = function(lhs, rhs)
+local config = {}
+
+--- maps twin lhs to rhs for each language
+local lang_map_lhs = {}
+local lang_map_rhs = {}
+
+local function try_insert_lhs(lang, lhs)
+  local twins = lang
+  repeat
+    twins = lang_map_lhs[twins] or lang_map_lhs['*']
+  until type(twins) == 'table'
+  local rhs = twins[lhs]
+
+  if rhs then
+    vim.schedule(function()
+      local position = vim.api.nvim_win_get_cursor(0)
+      local row = position[1] - 1
+      local column = position[2]
+      vim.api.nvim_buf_set_text(0, row, column, row, column, { rhs })
+    end)
+  end
+end
+
+local function try_skip_rhs(lang, rhs)
   local position = vim.api.nvim_win_get_cursor(0)
   local row = position[1] - 1
   local column = position[2]
 
-  vim.api.nvim_buf_set_text(0, row, column, row, column, { rhs })
-  vim.api.nvim_buf_set_text(0, row, column, row, column, { lhs })
+  local next_char = vim.api.nvim_buf_get_text(0, row, column, row, column + 1, {})[1]
+  local twins = lang
+  repeat
+    twins = lang_map_lhs[twins] or lang_map_lhs['*']
+  until type(twins) == 'table'
 
-  vim.api.nvim_win_set_cursor(0, { position[1], column + lhs:len() })
+  if next_char == rhs and twins[rhs] then
+    vim.v.char = ''
+    vim.api.nvim_win_set_cursor(0, { row + 1, column + 1 })
+    return true
+  end
+  return false
 end
 
-local setup_keybindings = function(language_pairs, twins)
-  for _, pair in pairs(language_pairs) do
-    -- check if key is table
-    local twin
-    if type(pair) == 'table' then
-      twin = pair
-    else
-      twin = twins[pair]
-    end
+local function on_insert()
+  local lang = util.language_at_cursor()
+  local insert = vim.v.char
 
-    vim.keymap.set('i', twin[1], function()
-      insert_twin(twin[1], twin[2] or twin[1])
-    end, {
-      buffer = 0,
-    })
+  if try_skip_rhs(lang, insert) then
+    return
+  end
+  try_insert_lhs(lang, insert)
+end
+
+local function create_lang_maps(lang)
+  local lang_table_lhs = {}
+  local lang_table_rhs = {}
+  if lang ~= '*' then
+    lang_table_lhs = vim.deepcopy(lang_map_lhs['*'])
+    lang_table_rhs = vim.deepcopy(lang_map_rhs['*'])
+  end
+
+  local lang_twins = config.languages[lang]
+
+  if type(lang_twins) == 'table' then
+    for _, twin_key in pairs(config.languages[lang]) do
+      local twin
+      if type(twin_key) == 'table' then
+        twin = twin_key
+      else
+        twin = config.pairs[twin_key]
+      end
+      local lhs = twin[1]
+      local rhs = twin[2] or twin[1]
+      lang_table_lhs[lhs] = rhs
+      lang_table_rhs[rhs] = lhs
+    end
+  else
+    -- use alias
+    lang_table_lhs = lang_twins
+    lang_table_rhs = lang_twins
+  end
+
+  lang_map_lhs[lang] = lang_table_lhs
+  lang_map_rhs[lang] = lang_table_rhs
+end
+
+--- computes the lang_pairs table
+local function setup_table()
+  create_lang_maps('*')
+  for lang, _ in pairs(config.languages) do
+    create_lang_maps(lang)
   end
 end
 
 local group = vim.api.nvim_create_augroup('Twins', { clear = true })
 
-local setup_autocommands = function(config)
-  for language, twins in pairs(config.languages) do
-    if language == '*' then
-      vim.api.nvim_create_autocmd('FileType', {
-        group = group,
-        callback = function()
-          setup_keybindings(twins, config.pairs)
-        end,
-      })
-    end
-    vim.api.nvim_create_autocmd('FileType', {
-      pattern = language,
-      group = group,
-      callback = function()
-        setup_keybindings(twins, config.pairs)
-      end,
-    })
-  end
+local function setup_autocommands()
+  vim.api.nvim_create_autocmd('InsertCharPre', {
+    group = group,
+    callback = on_insert,
+  })
 end
 
----@param config table
-function M.setup(config)
-  config = vim.tbl_deep_extend('force', default_config, config)
-  setup_autocommands(config)
+function M.setup(cfg)
+  config = vim.tbl_deep_extend('force', default_config, cfg)
+  setup_table()
+  setup_autocommands()
 end
 
 return M
