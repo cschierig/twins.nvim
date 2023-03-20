@@ -84,7 +84,7 @@ It has the following structure:
 }
 ```
 
-The default configuration can be at the beginning of [this file](./lua/init.lua).
+The default configuration can be at the beginning of [this file](./lua/twins/init.lua).
 
 ## Similar (better) plugins
 
