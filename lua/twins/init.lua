@@ -53,10 +53,14 @@ local default_config = {
 
 local config = {}
 
---- maps twin lhs to rhs for each language
+-- caches, precomputed on startup
 local lang_map_lhs = {}
 local lang_map_rhs = {}
+local trigger_chars = {}
 
+--- Tries to insert the corresponding pair for the given lhs.
+--- @param lang string The language at the position where the text is inserted.
+--- @param lhs string The character which is to be inserted.
 local function try_insert_lhs(lang, lhs)
   local twins = lang
   repeat
@@ -74,6 +78,9 @@ local function try_insert_lhs(lang, lhs)
   end
 end
 
+--- Tries to move past the rhs.
+--- @param lang string The language at the position where the text is inserted.
+--- @param rhs string The character which is to be skipped.
 local function try_skip_rhs(lang, rhs)
   local position = vim.api.nvim_win_get_cursor(0)
   local row = position[1] - 1
@@ -94,8 +101,12 @@ local function try_skip_rhs(lang, rhs)
 end
 
 local function on_insert()
-  local lang = util.language_at_cursor()
   local insert = vim.v.char
+  -- return if the character isn't a trigger character.
+  if not trigger_chars[insert] then
+    return
+  end
+  local lang = util.language_at_cursor()
 
   if try_skip_rhs(lang, insert) then
     return
@@ -123,6 +134,10 @@ local function create_lang_maps(lang)
       end
       local lhs = twin[1]
       local rhs = twin[2] or twin[1]
+
+      trigger_chars[lhs] = {}
+      trigger_chars[rhs] = {}
+
       lang_table_lhs[lhs] = rhs
       lang_table_rhs[rhs] = lhs
     end
@@ -136,8 +151,8 @@ local function create_lang_maps(lang)
   lang_map_rhs[lang] = lang_table_rhs
 end
 
---- computes the lang_pairs table
-local function setup_table()
+--- Builds the different cache tables from the configuration.
+local function setup_cache()
   create_lang_maps('*')
   for lang, _ in pairs(config.languages) do
     create_lang_maps(lang)
@@ -154,8 +169,13 @@ local function setup_autocommands()
 end
 
 function M.setup(cfg)
-  config = vim.tbl_deep_extend('force', default_config, cfg)
-  setup_table()
+  local async
+  async = vim.loop.new_async(function()
+    config = vim.tbl_deep_extend('force', default_config, cfg)
+    setup_cache()
+    async:close()
+  end)
+  async:send()
   setup_autocommands()
 end
 
