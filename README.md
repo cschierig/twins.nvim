@@ -25,7 +25,7 @@ and proceed by following the instructions in the [configuration](#Configuration)
 
 ### Dependencies
 
-- Neovim >= 0.9.0
+- Neovim >= 0.8.0
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/).
 
 ### Packer.nvim
