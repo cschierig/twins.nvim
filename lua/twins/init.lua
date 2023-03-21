@@ -1,4 +1,3 @@
-local vim = vim
 local util = require('twins.util')
 
 local M = {}
@@ -83,7 +82,7 @@ local function try_skip_rhs(lang, rhs)
   local next_char = vim.api.nvim_buf_get_text(0, row, column, row, column + 1, {})[1]
   local twins = lang
   repeat
-    twins = lang_map_lhs[twins] or lang_map_lhs['*']
+    twins = lang_map_rhs[twins] or lang_map_rhs['*']
   until type(twins) == 'table'
 
   if next_char == rhs and twins[rhs] then
