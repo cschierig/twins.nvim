@@ -1,9 +1,9 @@
 local api = vim.api
-local parsers = require('nvim-treesitter.parsers')
 
 M = {}
 
 function M.language_at_cursor()
+  local parsers = require('nvim-treesitter.parsers')
   -- inspired by JoosepAlviste/nvim-ts-context-commentstring
   if not parsers.has_parser() then
     return parsers.get_buf_lang()

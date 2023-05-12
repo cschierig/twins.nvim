@@ -48,6 +48,14 @@ local default_config = {
       'squotes',
       'dquotes',
     },
+    toml = {
+      'square',
+      'squotes',
+      'dquotes',
+    },
+  },
+  keys = {
+    tabout = true,
   },
 }
 
@@ -81,12 +89,16 @@ end
 --- Tries to move past the rhs.
 --- @param lang string The language at the position where the text is inserted.
 --- @param rhs string The character which is to be skipped.
+--- @return boolean value true if the function skipped a rhs, false otherwise.
+---@overload fun(lang: string): boolean
 local function try_skip_rhs(lang, rhs)
   local position = vim.api.nvim_win_get_cursor(0)
   local row = position[1] - 1
   local column = position[2]
 
   local next_char = vim.api.nvim_buf_get_text(0, row, column, row, column + 1, {})[1]
+  rhs = rhs or next_char
+
   local twins = lang
   repeat
     twins = lang_map_rhs[twins] or lang_map_rhs['*']
@@ -94,7 +106,9 @@ local function try_skip_rhs(lang, rhs)
 
   if next_char == rhs and twins[rhs] then
     vim.v.char = ''
-    vim.api.nvim_win_set_cursor(0, { row + 1, column + 1 })
+    vim.schedule(function()
+      vim.api.nvim_win_set_cursor(0, { row + 1, column + 1 })
+    end)
     return true
   end
   return false
@@ -168,6 +182,19 @@ local function setup_autocommands()
   })
 end
 
+local function setup_mappings()
+  if config.tabout then
+    vim.keymap.set('i', '<tab>', function()
+      local lang = util.language_at_cursor()
+      if try_skip_rhs(lang) then
+        return
+      else
+        return '<tab>'
+      end
+    end, { expr = true })
+  end
+end
+
 function M.setup(cfg)
   local async
   async = vim.loop.new_async(function()
@@ -177,6 +204,7 @@ function M.setup(cfg)
   end)
   async:send()
   setup_autocommands()
+  setup_mappings()
 end
 
 return M

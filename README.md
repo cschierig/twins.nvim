@@ -15,7 +15,7 @@ The plugin is currently in early development and isn't very smart about insertin
 - dot repeat
 - nested languages
 - Treesitter support to detect if a pair should be closed.
-- multiple character pairs (`function()...end`)
+- multiple character pairs (`function()...end` in lua or `\[\]` in tex)
 - deleting pair after inserting should delete both tokens.
 
 ## Installation
@@ -80,6 +80,9 @@ It has the following structure:
     markdown = {
       { '_', '_' } -- pairs can also be specified in the language configuration
     },
+  },
+  keys = {
+    tabout = true -- enables tabbing out of pairs
   }
 }
 ```
