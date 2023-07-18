@@ -56,6 +56,7 @@ local default_config = {
   },
   keys = {
     tabout = true,
+    delete_pair = true,
   },
 }
 
@@ -112,6 +113,27 @@ local function try_skip_rhs(lang, rhs)
     return true
   end
   return false
+end
+
+local function try_delete_rhs(lang)
+  local position = vim.api.nvim_win_get_cursor(0)
+  local row = position[1] - 1
+  local column = position[2]
+
+  local left_char = vim.api.nvim_buf_get_text(0, row, column - 1, row, column, {})[1]
+  local right_char = vim.api.nvim_buf_get_text(0, row, column, row, column + 1, {})[1]
+
+  local twins = lang
+  repeat
+    twins = lang_map_lhs[twins] or lang_map_rhs['*']
+  until type(twins) == 'table'
+
+  if twins[left_char] == right_char then
+    vim.api.nvim_buf_set_text(0, row, column - 1, row, column + 1, {})
+  else
+    vim.api.nvim_buf_set_text(0, row, column - 1, row, column, {})
+  end
+  vim.api.nvim_win_set_cursor(0, { row + 1, column - 1 })
 end
 
 local function on_insert()
@@ -183,7 +205,8 @@ local function setup_autocommands()
 end
 
 local function setup_mappings()
-  if config.tabout then
+  -- tabout
+  if config.keys.tabout then
     vim.keymap.set('i', '<tab>', function()
       local lang = util.language_at_cursor()
       if try_skip_rhs(lang) then
@@ -193,12 +216,19 @@ local function setup_mappings()
       end
     end, { expr = true })
   end
+  if config.keys.delete_pair then
+    vim.keymap.set('i', '<backspace>', function()
+      local lang = util.language_at_cursor()
+      try_delete_rhs(lang)
+    end, { silent = true })
+  end
+  -- tabout
 end
 
 function M.setup(cfg)
   local async
+  config = vim.tbl_deep_extend('force', default_config, cfg)
   async = vim.loop.new_async(function()
-    config = vim.tbl_deep_extend('force', default_config, cfg)
     setup_cache()
     async:close()
   end)

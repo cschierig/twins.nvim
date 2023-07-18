@@ -6,9 +6,10 @@ The plugin is currently in early development and isn't very smart about insertin
 ## Features
 
 - Automatically closes braces and other pairs when left side is inserted.
-- Move past right side of pair when entering it.
+- Move past right side of pair when entering tab before it.
 - Language-dependent auto-closing pairs
 - Supports treesitter injected languages
+- delete left and right side when deleting pair whose characters are touching
 
 ## Not yet implemented
 
@@ -16,7 +17,6 @@ The plugin is currently in early development and isn't very smart about insertin
 - nested languages
 - Treesitter support to detect if a pair should be closed.
 - multiple character pairs (`function()...end` in lua or `\[\]` in tex)
-- deleting pair after inserting should delete both tokens.
 
 ## Installation
 
@@ -83,6 +83,7 @@ It has the following structure:
   },
   keys = {
     tabout = true -- enables tabbing out of pairs
+    delete_pair = true -- when deleting the left twin with backspace, the right one will be deleted as well if it is to the right of the cursor
   }
 }
 ```
