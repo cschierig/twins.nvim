@@ -5,12 +5,12 @@ local M = {}
 -- TODO: disallow lhs duplication
 local default_config = {
   pairs = {
-    parens = { '(', ')' },
+    backticks = { '`' },
     curly = { '{', '}' },
+    dquotes = { '"' },
+    parens = { '(', ')' },
     square = { '[', ']' },
     squotes = { "'" },
-    dquotes = { '"' },
-    backticks = { '`' },
   },
   languages = {
     ['*'] = {
@@ -25,6 +25,7 @@ local default_config = {
       'dquotes',
     },
     c_sharp = 'c',
+    java = 'c',
     lua = {
       'parens',
       'curly',
@@ -39,6 +40,7 @@ local default_config = {
       'backticks',
       { '*' },
       { '_' },
+      { '~' },
     },
     markdown_inline = 'markdown',
     rust = {
@@ -120,7 +122,9 @@ local function try_delete_rhs(lang)
   local row = position[1] - 1
   local column = position[2]
 
-  local left_char = vim.api.nvim_buf_get_text(0, row, column - 1, row, column, {})[1]
+  local left_pos = math.max(column - 1, 0)
+
+  local left_char = vim.api.nvim_buf_get_text(0, row, left_pos, row, column, {})[1]
   local right_char = vim.api.nvim_buf_get_text(0, row, column, row, column + 1, {})[1]
 
   local twins = lang
@@ -129,11 +133,10 @@ local function try_delete_rhs(lang)
   until type(twins) == 'table'
 
   if twins[left_char] == right_char then
-    vim.api.nvim_buf_set_text(0, row, column - 1, row, column + 1, {})
+    return '<backspace><delete>'
   else
-    vim.api.nvim_buf_set_text(0, row, column - 1, row, column, {})
+    return '<backspace>'
   end
-  vim.api.nvim_win_set_cursor(0, { row + 1, column - 1 })
 end
 
 local function on_insert()
@@ -214,15 +217,15 @@ local function setup_mappings()
       else
         return '<tab>'
       end
-    end, { expr = true })
+    end, { expr = true, silent = true })
   end
+  -- delete pairs
   if config.keys.delete_pair then
     vim.keymap.set('i', '<backspace>', function()
       local lang = util.language_at_cursor()
-      try_delete_rhs(lang)
-    end, { silent = true })
+      return try_delete_rhs(lang)
+    end, { expr = true, silent = true })
   end
-  -- tabout
 end
 
 function M.setup(cfg)

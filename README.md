@@ -9,14 +9,13 @@ The plugin is currently in early development and isn't very smart about insertin
 - Move past right side of pair when entering tab before it.
 - Language-dependent auto-closing pairs
 - Supports treesitter injected languages
-- delete left and right side when deleting pair whose characters are touching
+- delete left and right side when deleting pair whose characters are touching.
 
 ## Not yet implemented
 
 - dot repeat
 - nested languages
 - Treesitter support to detect if a pair should be closed.
-- multiple character pairs (`function()...end` in lua or `\[\]` in tex)
 
 ## Installation
 
@@ -31,7 +30,7 @@ and proceed by following the instructions in the [configuration](#Configuration)
 ### Packer.nvim
 ```lua
 use {
-  'CozyPenguin/twins.nvim',
+  'cschierig/twins.nvim',
   requires = { 'nvim-treesitter/nvim-treesitter' },
   event = 'BufEnter',
   config = function()
@@ -43,7 +42,7 @@ use {
 ### Lazy.nvim
 ```lua
 {
-  'CozyPenguin/twins.nvim',
+  'cschierig/twins.nvim',
   dependencies = { 'nvim-treesitter/nvim-treesitter' },
   event = 'BufEnter',
   config = true,
