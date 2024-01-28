@@ -84,6 +84,12 @@ local function try_insert_lhs(lang, lhs)
       local position = vim.api.nvim_win_get_cursor(0)
       local row = position[1] - 1
       local column = position[2]
+
+      -- check that the next character isn't alphanumeric
+      if vim.api.nvim_buf_get_text(0, row, column, row, column + 1, {})[1]:match('%w') ~= nil then
+        return
+      end
+
       vim.api.nvim_buf_set_text(0, row, column, row, column, { rhs })
     end)
   end
